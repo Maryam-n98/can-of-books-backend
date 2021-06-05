@@ -27,13 +27,16 @@ server.listen(PORT, () => {
 server.get('/', proofOfLif);
 function proofOfLif(req, res) {
     console.log('home server route');
-    let x = 'home server route';
     res.send(x);
 }
 
-//connect mongo with express server
-mongoose.connect('mongodb://localhost:27017/books',
-    { useNewUrlParser: true, useUnifiedTopology: true });
+//connect mongo with express server locally
+// mongoose.connect('mongodb://localhost:27017/books',
+//     { useNewUrlParser: true, useUnifiedTopology: true });
+
+    //connect mongo with express server deloyed
+mongoose.connect(process.env.MONGODB_URI ,
+{ useNewUrlParser: true, useUnifiedTopology: true });
 
 //create collection #1 
 
@@ -110,8 +113,17 @@ function seadUserCollections() {
 
 // seadUserCollections();
 
+
 //recieve this request and send the response for the client
 server.get('/books', seadBooksCollections)
+//receive the axios.post request
+server.post('/addbook', addBookHandler);
+//receive the axios.delete request
+server.delete('/deletebook/:index', deleteBookHandler);
+//receive the axios.put request
+server.put('/updatebook/:index', updateBookHandler);
+
+
 
 // http://localhost:3003/books?email=ahmadabuosbeh20@gmail.com
 function seadBooksCollections(req, res) {
@@ -151,8 +163,6 @@ function seadBooksCollections(req, res) {
 //   const addBook = await axios.post(`${serverRoute}/addbook`,bookData);
 
 
-//receive the axios.post request
-server.post('/addbook', addBookHandler);
 
 function addBookHandler(req, res) {
     console.log('req.body', req.body);
@@ -175,6 +185,7 @@ function addBookHandler(req, res) {
             
             userData[0].save();
             
+            
             res.send(userData[0].books);
 
         }
@@ -192,8 +203,8 @@ function addBookHandler(req, res) {
 //     let newArrAfterDeleteing = await axios.delete(`${this.state.serverRoute}/deletebook/${index}`,{params:userEmail})
      
 //   }
-//receive the axios.delete request
-server.delete('/deletebook/:index', deleteBookHandler);
+
+
 
 function deleteBookHandler(req,res) {
     
@@ -215,7 +226,8 @@ userInfoModel.find({ userEmail: userEmail }, function (err, userData) {
         userData[0].books=newBookArr;
         userData[0].save();
 
-        console.log('userData[0].books', userData[0].books);
+        // console.log('userData 2222', userData);
+        // console.log('userData[0] 2222', userData[0]);
         
         res.send(userData[0].books);
 
@@ -226,3 +238,47 @@ userInfoModel.find({ userEmail: userEmail }, function (err, userData) {
 
 
 }
+
+//create update function handeler
+
+function updateBookHandler(req,res) {
+    
+    const index = req.params.index;
+    const {bookDescription,bookImage,bookTitle,userEmail}=req.body
+    console.log('index',index);
+    console.log('userEmail',userEmail);
+    
+    userInfoModel.find({ userEmail: userEmail }, function (err, userData) {
+        if (err) {
+            console.log('did not work')
+        } else {
+        // userData[0].books.splice(index,2,{
+        //     bookTitle: bookTitle,
+        //     bookImage: bookImage,
+        //     bookDescription: bookDescription,
+        // });
+        
+        
+        userData[0].books[index]={
+            bookTitle: bookTitle,
+            bookImage: bookImage,
+            bookDescription: bookDescription,
+        }
+            
+    
+            console.log('userData[0].books', userData[0].books);
+            console.log('userData[0] ', userData[0]);
+
+            userData[0].save();
+            res.send(userData[0].books);
+            
+            console.log('response ', userData[0].books);
+           
+    
+    
+    
+        }
+    });
+    
+    
+    }
